@@ -7,7 +7,6 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Check_Button.H>
-#include <FL/Fl_Int_Input.H>
 #include <FL/Fl_Pack.H>
 #include <FL/Fl_Radio_Round_Button.H>
 #include <FL/Fl_RGB_Image.H>
@@ -274,22 +273,6 @@ void wrapChangeCallback(Fl_Widget *w, void *data) {
     }
 }
 
-// void ruleChangeCallback(Fl_Widget *w, void *data) {
-//     // std::cout << "Input change\n";
-//
-//     Fl_Int_Input *const input = dynamic_cast<Fl_Int_Input*>(w);
-//
-//     if (input) {
-//         int newRule = -1;
-//         std::istringstream(input->value()) >> newRule;
-//
-//         if (newRule >= 0 && newRule <= 255) {
-//             config.rule = newRule;
-//             updateEca(config);
-//         }
-//     }
-// }
-
 // C++98 standard library does not have round.
 /* https://stackoverflow.com/questions/485525/
 round-for-float-in-c/485546#485546 */
@@ -406,22 +389,11 @@ int main(int argc, char **argv) {
 
     Fl_Check_Button *const wrapButton = new Fl_Check_Button(0, 0, 0, radioButtonHeight, "Wrap");
 
-    // // We put the Input in a Pack so that the label does not overflow and be hidden.
-    // // The Input element does not seem to properly allot space for the label.
-    // //  May want to use a blank label and a separate text element as the label.
-    // Fl_Pack *const rulePack = new Fl_Pack(0, 0, 0, radioButtonHeight);
-    // rulePack->type(Fl_Pack::HORIZONTAL);
-    // rightPack->add(rulePack);
-    // Fl_Int_Input *const ruleInput = new Fl_Int_Input(0, 0, 50, radioButtonHeight, "Rule");
-    // ruleInput->align(FL_ALIGN_RIGHT);
-    // // rightPack->add(ruleInput);
-    // rulePack->add(ruleInput);
-
     IntHorValueSlider *const ruleSlider = new IntHorValueSlider(0, 0, 0, radioButtonHeight, "Rule");
     ruleSlider->bounds(0, 255);
     ruleSlider->labelsize(ruleSlider->labelsize() * sliderLabelSizeMult);
 
-    // Dumb and easy way to put spaces between the sliders
+    // Dumb and easy way to put space between the sliders
     // Necessary because FLTK does not allot space for the slider label (why is that a good decision, FLTK?)
     Fl_Box *const sliderSpacer = new Fl_Box(0, 0, 0, 20);
     sliderSpacer->box(FL_NO_BOX);
@@ -443,7 +415,6 @@ int main(int argc, char **argv) {
 
         std::srand(std::time(NULL));
         config.rule = std::rand() % 256;
-        // ruleInput->value("18");
         ruleSlider->value(config.rule);
 
         config.xth = 80;
@@ -471,7 +442,6 @@ int main(int argc, char **argv) {
 
         // Checkbox callback gets triggered for both set and unset
         wrapButton->callback(wrapChangeCallback, NULL);
-        // ruleInput->callback(ruleChangeCallback, NULL);
         ruleSlider->callback(ruleChangeCallback, NULL);
         xthSlider->callback(xthChangeCallback, NULL);
     }
