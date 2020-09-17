@@ -258,6 +258,8 @@ int main(int argc, char **argv) {
     const int headerHeight = 30;
     // const int margin = 15;
     const int imageAreaWidth = initialWindowWidth - rightColumnWidth;
+
+    const Fl_Boxtype headerBoxStyle = FL_PLASTIC_UP_BOX;
     const char *const windowTitle = "Elementary Cellular Automata Viewer";
 
     window = new Fl_Window(initialWindowWidth, initialWindowHeight, windowTitle);
@@ -288,7 +290,7 @@ int main(int argc, char **argv) {
     windowPack->add(rightPack);
 
     Fl_Box *const initialStateBox = new Fl_Box(0, 0, 0, headerHeight, "Initial State");
-    initialStateBox->box(FL_PLASTIC_UP_BOX);
+    initialStateBox->box(headerBoxStyle);
     rightPack->add(initialStateBox);
 
     Fl_Pack *const initialStateRadioPack = new Fl_Pack(0, 0, rightColumnWidth, 0);
@@ -311,7 +313,7 @@ int main(int argc, char **argv) {
     // initialCenterBitButton->color(fl_rgb_color(255, 255, 0));
 
     Fl_Box *const colorBox = new Fl_Box(0, 0, 0, headerHeight, "Color");
-    colorBox->box(FL_PLASTIC_UP_BOX);
+    colorBox->box(headerBoxStyle);
     rightPack->add(colorBox);
 
     Fl_Pack *const colorRadioPack = new Fl_Pack(0, 0, 0, 0);
@@ -325,7 +327,7 @@ int main(int argc, char **argv) {
     colorRadioPack->end();
 
     Fl_Box *const optionsBox = new Fl_Box(0, 0, 0, headerHeight, "Options");
-    optionsBox->box(FL_PLASTIC_UP_BOX);
+    optionsBox->box(headerBoxStyle);
     rightPack->add(optionsBox);
 
     Fl_Check_Button *const wrapButton = new Fl_Check_Button(0, 0, 0, radioButtonHeight, "Wrap");
