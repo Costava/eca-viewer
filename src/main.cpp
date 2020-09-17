@@ -1,20 +1,28 @@
+#include <cmath>
 #include <cstdlib>
+#include <ctime>
 #include <iostream>
+#include <sstream>
 
 #include <FL/Fl.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Check_Button.H>
+#include <FL/Fl_Int_Input.H>
 #include <FL/Fl_Pack.H>
 #include <FL/Fl_Radio_Round_Button.H>
 #include <FL/Fl_RGB_Image.H>
 #include <FL/Fl_Window.H>
 #include <FL/fl_draw.H>
 
+#include "EcaWindow.hpp"
+#include "IntHorValueSlider.hpp"
+
 enum InitialState {
     InitialState_CENTER_BIT,
     InitialState_CENTER_BYTE,
     InitialState_EVEN,
     InitialState_ODD,
+    InitialState_EVERY_XTH,
     InitialState_ALL,
     InitialState_NONE,
     InitialState_RANDOM
@@ -32,6 +40,9 @@ enum InitialState initialStateFromVoidPtr(void *const ptr) {
     }
     if (ptr == (void*)InitialState_ODD) {
         return InitialState_ODD;
+    }
+    if (ptr == (void*)InitialState_EVERY_XTH) {
+        return InitialState_EVERY_XTH;
     }
     if (ptr == (void*)InitialState_ALL) {
         return InitialState_ALL;
@@ -69,13 +80,14 @@ struct Config {
     enum ColorMode colorMode;
     bool wrap;
     unsigned char rule;
+    unsigned int xth;
 } config;
 
 Fl_Window *window;
 Fl_Box *box;
 
 // Populate first row of buffer
-void populateFirstRow(unsigned char *const buf, const int rowLen, const struct Config &config) {
+void populateRow(unsigned char *const buf, const int rowLen, const struct Config &config) {
     const int centerByteIndex = rowLen / 2;
 
     switch (config.initialState) {
@@ -110,6 +122,19 @@ void populateFirstRow(unsigned char *const buf, const int rowLen, const struct C
                 }
                 else {
                     buf[i] = 0xff;
+                }
+            }
+            break;
+        case InitialState_EVERY_XTH:
+            for (int i = 0; i < rowLen; i += 1) {
+                if (config.xth == 1) {
+                    buf[i] = 0xff;
+                }
+                else if (i != 0 && (i % config.xth) == 0) {
+                    buf[i] = 0xff;
+                }
+                else {
+                    buf[i] = 0;
                 }
             }
             break;
@@ -168,7 +193,7 @@ void updateEca(const struct Config &config) {
 
     // Populate first row
     const int rowLen = multiplier * width;
-    populateFirstRow(buf, rowLen, config);
+    populateRow(buf, rowLen, config);
 
     // Populate remaining rows
     // Iterate rows
@@ -249,23 +274,75 @@ void wrapChangeCallback(Fl_Widget *w, void *data) {
     }
 }
 
+// void ruleChangeCallback(Fl_Widget *w, void *data) {
+//     // std::cout << "Input change\n";
+//
+//     Fl_Int_Input *const input = dynamic_cast<Fl_Int_Input*>(w);
+//
+//     if (input) {
+//         int newRule = -1;
+//         std::istringstream(input->value()) >> newRule;
+//
+//         if (newRule >= 0 && newRule <= 255) {
+//             config.rule = newRule;
+//             updateEca(config);
+//         }
+//     }
+// }
+
+// C++98 standard library does not have round.
+/* https://stackoverflow.com/questions/485525/
+round-for-float-in-c/485546#485546 */
+double round(const double d) {
+    return floor(d + 0.5);
+}
+
+void ruleChangeCallback(Fl_Widget *w, void *data) {
+    // std::cout << "Rule change\n";
+
+    Fl_Hor_Value_Slider *const slider = dynamic_cast<Fl_Hor_Value_Slider*>(w);
+
+    if (slider) {
+        // Round slider to integer value
+        slider->value(round(slider->value()));
+
+        const int val = std::floor(slider->value());
+        config.rule = val;
+        updateEca(config);
+    }
+}
+
+void xthChangeCallback(Fl_Widget *w, void *data) {
+    // std::cout << "Rule change\n";
+
+    Fl_Hor_Value_Slider *const slider = dynamic_cast<Fl_Hor_Value_Slider*>(w);
+
+    if (slider) {
+        // Round slider to integer value
+        slider->value(round(slider->value()));
+
+        const int val = std::floor(slider->value());
+        config.xth = val;
+        updateEca(config);
+    }
+}
+
 int main(int argc, char **argv) {
     // Layout constants
     const int initialWindowWidth = 1000;
-    const int initialWindowHeight = 500;
+    const int initialWindowHeight = 600;
     const int rightColumnWidth = 200;
     const int radioButtonHeight = 30;
     const int headerHeight = 30;
     // const int margin = 15;
     const int imageAreaWidth = initialWindowWidth - rightColumnWidth;
-
+    const double sliderLabelSizeMult = 0.9;
     const Fl_Boxtype headerBoxStyle = FL_PLASTIC_UP_BOX;
     const char *const windowTitle = "Elementary Cellular Automata Viewer";
 
-    window = new Fl_Window(initialWindowWidth, initialWindowHeight, windowTitle);
+    window = new EcaWindow(initialWindowWidth, initialWindowHeight, windowTitle);
     Fl_Pack *const windowPack = new Fl_Pack(0, 0, initialWindowWidth, initialWindowHeight);
     windowPack->type(Fl_Pack::HORIZONTAL);
-    window->add(windowPack);
     window->resizable(windowPack);
 
     // You can sometimes get away with setting the width of children
@@ -283,30 +360,30 @@ int main(int argc, char **argv) {
     // box->box(FL_BORDER_BOX);// For debugging
     // Inexplicably, this causes the image not to show
     // box->labeltype(_FL_IMAGE_LABEL);
-    windowPack->add(box);
     windowPack->resizable(box);
 
     Fl_Pack *const rightPack = new Fl_Pack(0, 0, rightColumnWidth, initialWindowHeight);
-    windowPack->add(rightPack);
+    // This is unnecessary/redundant
+    //  except that it gets rid of the warning that rightPack variable is unused
+    rightPack->type(Fl_Pack::VERTICAL);
 
     Fl_Box *const initialStateBox = new Fl_Box(0, 0, 0, headerHeight, "Initial State");
     initialStateBox->box(headerBoxStyle);
-    rightPack->add(initialStateBox);
-
-    Fl_Pack *const initialStateRadioPack = new Fl_Pack(0, 0, rightColumnWidth, 0);
-    rightPack->add(initialStateRadioPack);
 
     // Each set of radio buttons has its own pack because different sets
     //  of radio buttons need to be in different groups
     //  in order to work like radio buttons (only one selected at a time)
-    initialStateRadioPack->begin();
+    Fl_Pack *const initialStateRadioPack = new Fl_Pack(0, 0, rightColumnWidth, 0);
+
     Fl_Radio_Round_Button *const initialCenterBitButton =  new Fl_Radio_Round_Button(0, 0, 0, radioButtonHeight, "Center bit");
     Fl_Radio_Round_Button *const initialCenterByteButton = new Fl_Radio_Round_Button(0, 0, 0, radioButtonHeight, "Center byte");
     Fl_Radio_Round_Button *const initialEvenButton =       new Fl_Radio_Round_Button(0, 0, 0, radioButtonHeight, "Even");
     Fl_Radio_Round_Button *const initialOddButton =        new Fl_Radio_Round_Button(0, 0, 0, radioButtonHeight, "Odd");
+    Fl_Radio_Round_Button *const initialEveryXthButton =   new Fl_Radio_Round_Button(0, 0, 0, radioButtonHeight, "Every Xth byte");
     Fl_Radio_Round_Button *const initialAllButton =        new Fl_Radio_Round_Button(0, 0, 0, radioButtonHeight, "All");
     Fl_Radio_Round_Button *const initialNoneButton =       new Fl_Radio_Round_Button(0, 0, 0, radioButtonHeight, "None");
     Fl_Radio_Round_Button *const initialRandomButton =     new Fl_Radio_Round_Button(0, 0, 0, radioButtonHeight, "Random");
+
     initialStateRadioPack->end();
 
     // Changes nothing
@@ -314,51 +391,92 @@ int main(int argc, char **argv) {
 
     Fl_Box *const colorBox = new Fl_Box(0, 0, 0, headerHeight, "Color");
     colorBox->box(headerBoxStyle);
-    rightPack->add(colorBox);
 
     Fl_Pack *const colorRadioPack = new Fl_Pack(0, 0, 0, 0);
-    rightPack->add(colorRadioPack);
 
-    colorRadioPack->begin();
     Fl_Radio_Round_Button *const rgbButton = new Fl_Radio_Round_Button(
         0, 0, 0, radioButtonHeight, "RGB 888");
     Fl_Radio_Round_Button *const grayscaleButton = new Fl_Radio_Round_Button(
         0, 0, 0, radioButtonHeight, "Grayscale 8");
+
     colorRadioPack->end();
 
     Fl_Box *const optionsBox = new Fl_Box(0, 0, 0, headerHeight, "Options");
     optionsBox->box(headerBoxStyle);
-    rightPack->add(optionsBox);
 
     Fl_Check_Button *const wrapButton = new Fl_Check_Button(0, 0, 0, radioButtonHeight, "Wrap");
-    rightPack->add(wrapButton);
 
-    // Initialize the config and the UI
-    config.initialState = InitialState_CENTER_BIT;
-    config.colorMode = ColorMode_RGB888;
-    config.wrap = true;
-    config.rule = 18;
-    initialCenterBitButton->setonly();
-    rgbButton->setonly();
-    wrapButton->set();
-    updateEca(config);
+    // // We put the Input in a Pack so that the label does not overflow and be hidden.
+    // // The Input element does not seem to properly allot space for the label.
+    // //  May want to use a blank label and a separate text element as the label.
+    // Fl_Pack *const rulePack = new Fl_Pack(0, 0, 0, radioButtonHeight);
+    // rulePack->type(Fl_Pack::HORIZONTAL);
+    // rightPack->add(rulePack);
+    // Fl_Int_Input *const ruleInput = new Fl_Int_Input(0, 0, 50, radioButtonHeight, "Rule");
+    // ruleInput->align(FL_ALIGN_RIGHT);
+    // // rightPack->add(ruleInput);
+    // rulePack->add(ruleInput);
 
-    // Casting enum value to void ptr is not ideal but it works
-    // The radio button callbacks are only called when the button is set (never when unset)
-    initialCenterBitButton->callback( initialStateChangeCallback, (void*)InitialState_CENTER_BIT);
-    initialCenterByteButton->callback(initialStateChangeCallback, (void*)InitialState_CENTER_BYTE);
-    initialEvenButton->callback(      initialStateChangeCallback, (void*)InitialState_EVEN);
-    initialOddButton->callback(       initialStateChangeCallback, (void*)InitialState_ODD);
-    initialAllButton->callback(       initialStateChangeCallback, (void*)InitialState_ALL);
-    initialNoneButton->callback(      initialStateChangeCallback, (void*)InitialState_NONE);
-    initialRandomButton->callback(    initialStateChangeCallback, (void*)InitialState_RANDOM);
+    IntHorValueSlider *const ruleSlider = new IntHorValueSlider(0, 0, 0, radioButtonHeight, "Rule");
+    ruleSlider->bounds(0, 255);
+    ruleSlider->labelsize(ruleSlider->labelsize() * sliderLabelSizeMult);
 
-    rgbButton->callback(colorModeChangeCallback, (void*)ColorMode_RGB888);
-    grayscaleButton->callback(colorModeChangeCallback, (void*)ColorMode_GRAYSCALE8);
+    // Dumb and easy way to put spaces between the sliders
+    // Necessary because FLTK does not allot space for the slider label (why is that a good decision, FLTK?)
+    Fl_Box *const sliderSpacer = new Fl_Box(0, 0, 0, 20);
+    sliderSpacer->box(FL_NO_BOX);
 
-    // Checkbox callback gets triggered for both set and unset
-    wrapButton->callback(wrapChangeCallback, NULL);
+    IntHorValueSlider *const xthSlider = new IntHorValueSlider(0, 0, 0, radioButtonHeight, "X");
+    xthSlider->bounds(1, 999);
+    xthSlider->labelsize(ruleSlider->labelsize() * sliderLabelSizeMult);
 
+    // Initialize config and UI
+    {
+        config.initialState = InitialState_RANDOM;
+        initialRandomButton->setonly();
+
+        config.colorMode = ColorMode_RGB888;
+        rgbButton->setonly();
+
+        config.wrap = true;
+        wrapButton->set();
+
+        std::srand(std::time(NULL));
+        config.rule = std::rand() % 256;
+        // ruleInput->value("18");
+        ruleSlider->value(config.rule);
+
+        config.xth = 80;
+        xthSlider->value(config.xth);
+
+        // The initial run
+        updateEca(config);
+    }
+
+    // Add change callbacks to widgets
+    {
+        // Casting enum value to void ptr is not ideal but it works
+        // The radio button callbacks are only called when the button is set (never when unset)
+        initialCenterBitButton->callback( initialStateChangeCallback, (void*)InitialState_CENTER_BIT);
+        initialCenterByteButton->callback(initialStateChangeCallback, (void*)InitialState_CENTER_BYTE);
+        initialEvenButton->callback(      initialStateChangeCallback, (void*)InitialState_EVEN);
+        initialOddButton->callback(       initialStateChangeCallback, (void*)InitialState_ODD);
+        initialEveryXthButton->callback(  initialStateChangeCallback, (void*)InitialState_EVERY_XTH);
+        initialAllButton->callback(       initialStateChangeCallback, (void*)InitialState_ALL);
+        initialNoneButton->callback(      initialStateChangeCallback, (void*)InitialState_NONE);
+        initialRandomButton->callback(    initialStateChangeCallback, (void*)InitialState_RANDOM);
+
+        rgbButton->callback(colorModeChangeCallback, (void*)ColorMode_RGB888);
+        grayscaleButton->callback(colorModeChangeCallback, (void*)ColorMode_GRAYSCALE8);
+
+        // Checkbox callback gets triggered for both set and unset
+        wrapButton->callback(wrapChangeCallback, NULL);
+        // ruleInput->callback(ruleChangeCallback, NULL);
+        ruleSlider->callback(ruleChangeCallback, NULL);
+        xthSlider->callback(xthChangeCallback, NULL);
+    }
+
+    window->end();
     window->show(argc, argv);
     return Fl::run();
 }
