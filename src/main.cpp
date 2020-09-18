@@ -7,6 +7,7 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Check_Button.H>
+#include <FL/Fl_Hor_Value_Slider.H>
 #include <FL/Fl_Pack.H>
 #include <FL/Fl_Radio_Round_Button.H>
 #include <FL/Fl_RGB_Image.H>
@@ -14,7 +15,6 @@
 #include <FL/fl_draw.H>
 
 #include "EcaWindow.hpp"
-#include "IntHorValueSlider.hpp"
 
 enum InitialState {
     InitialState_CENTER_BIT,
@@ -379,7 +379,7 @@ int main(int argc, char **argv) {
 
     Fl_Check_Button *const wrapButton = new Fl_Check_Button(0, 0, 0, radioButtonHeight, "Wrap");
 
-    IntHorValueSlider *const ruleSlider = new IntHorValueSlider(0, 0, 0, radioButtonHeight, "Rule");
+    Fl_Hor_Value_Slider *const ruleSlider = new Fl_Hor_Value_Slider(0, 0, 0, radioButtonHeight, "Rule");
     ruleSlider->bounds(0, 255);
     ruleSlider->step(1);
     ruleSlider->labelsize(ruleSlider->labelsize() * sliderLabelSizeMult);
@@ -389,7 +389,7 @@ int main(int argc, char **argv) {
     Fl_Box *const sliderSpacer = new Fl_Box(0, 0, 0, 20);
     sliderSpacer->box(FL_NO_BOX);
 
-    IntHorValueSlider *const xthSlider = new IntHorValueSlider(0, 0, 0, radioButtonHeight, "X");
+    Fl_Hor_Value_Slider *const xthSlider = new Fl_Hor_Value_Slider(0, 0, 0, radioButtonHeight, "X");
     xthSlider->bounds(1, 999);
     xthSlider->step(1);
     xthSlider->labelsize(ruleSlider->labelsize() * sliderLabelSizeMult);

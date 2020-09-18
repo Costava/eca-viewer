@@ -19,8 +19,7 @@ run: build
 build: main
 
 main: $(SRCDIR)/main.cpp \
-	$(OBJDIR)/EcaWindow.o \
-	$(OBJDIR)/IntHorValueSlider.o
+	$(OBJDIR)/EcaWindow.o
 	$(CXX) $(CXXFLAGS) -lfltk $^
 
 # The ./ at the beginning of the second line is redundant
@@ -32,7 +31,4 @@ clean:
 ################################################################################
 
 $(OBJDIR)/EcaWindow.o: $(SRCDIR)/EcaWindow.cpp $(SRCDIR)/EcaWindow.hpp
-	$(BUILDDEP)
-
-$(OBJDIR)/IntHorValueSlider.o: $(SRCDIR)/IntHorValueSlider.cpp $(SRCDIR)/IntHorValueSlider.hpp
 	$(BUILDDEP)
