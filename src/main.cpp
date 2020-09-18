@@ -281,14 +281,9 @@ double round(const double d) {
 }
 
 void ruleChangeCallback(Fl_Widget *w, void *data) {
-    // std::cout << "Rule change\n";
-
     Fl_Hor_Value_Slider *const slider = dynamic_cast<Fl_Hor_Value_Slider*>(w);
 
     if (slider) {
-        // Round slider to integer value
-        slider->value(round(slider->value()));
-
         const int val = std::floor(slider->value());
         config.rule = val;
         updateEca(config);
@@ -296,14 +291,9 @@ void ruleChangeCallback(Fl_Widget *w, void *data) {
 }
 
 void xthChangeCallback(Fl_Widget *w, void *data) {
-    // std::cout << "Rule change\n";
-
     Fl_Hor_Value_Slider *const slider = dynamic_cast<Fl_Hor_Value_Slider*>(w);
 
     if (slider) {
-        // Round slider to integer value
-        slider->value(round(slider->value()));
-
         const int val = std::floor(slider->value());
         config.xth = val;
         updateEca(config);
@@ -391,6 +381,7 @@ int main(int argc, char **argv) {
 
     IntHorValueSlider *const ruleSlider = new IntHorValueSlider(0, 0, 0, radioButtonHeight, "Rule");
     ruleSlider->bounds(0, 255);
+    ruleSlider->step(1);
     ruleSlider->labelsize(ruleSlider->labelsize() * sliderLabelSizeMult);
 
     // Dumb and easy way to put space between the sliders
@@ -400,6 +391,7 @@ int main(int argc, char **argv) {
 
     IntHorValueSlider *const xthSlider = new IntHorValueSlider(0, 0, 0, radioButtonHeight, "X");
     xthSlider->bounds(1, 999);
+    xthSlider->step(1);
     xthSlider->labelsize(ruleSlider->labelsize() * sliderLabelSizeMult);
 
     // Initialize config and UI

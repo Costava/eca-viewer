@@ -5,12 +5,8 @@ IntHorValueSlider::IntHorValueSlider(int X, int Y, int W, int H, const char *l) 
     // Nothing (base constructor called above)
 }
 
-void IntHorValueSlider::setValue(const double val) {
-    if (val >= minimum() && val <= maximum()) {
-        value(val);
-        set_changed();
-        do_callback(this, (void*)NULL);
-    }
+int IntHorValueSlider::value(double v) {
+    return Fl_Hor_Value_Slider::value(clamp(round(v)));
 }
 
 int IntHorValueSlider::handle(int e) {
@@ -22,11 +18,11 @@ int IntHorValueSlider::handle(int e) {
     }
 
     if (e == FL_KEYDOWN && Fl::event_key() == FL_Left) {
-        setValue(value() - 1);
+        value(Fl_Hor_Value_Slider::value() - step());
         return 1;
     }
     if (e == FL_KEYDOWN && Fl::event_key() == FL_Right) {
-        setValue(value() + 1);
+        value(Fl_Hor_Value_Slider::value() + step());
         return 1;
     }
 
