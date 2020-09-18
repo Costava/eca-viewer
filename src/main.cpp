@@ -12,8 +12,6 @@
 #include <FL/Fl_RGB_Image.H>
 #include <FL/Fl_Window.H>
 
-#include "EcaWindow.hpp"
-
 enum InitialState {
     InitialState_CENTER_BIT,
     InitialState_CENTER_BYTE,
@@ -307,7 +305,7 @@ int main(int argc, char **argv) {
     const Fl_Boxtype headerBoxStyle = FL_PLASTIC_UP_BOX;
     const char *const windowTitle = "Elementary Cellular Automata Viewer";
 
-    window = new EcaWindow(initialWindowWidth, initialWindowHeight, windowTitle);
+    window = new Fl_Window(initialWindowWidth, initialWindowHeight, windowTitle);
     Fl_Pack *const windowPack = new Fl_Pack(0, 0, initialWindowWidth, initialWindowHeight);
     windowPack->type(Fl_Pack::HORIZONTAL);
     window->resizable(windowPack);

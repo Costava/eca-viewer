@@ -10,16 +10,16 @@ CXXFLAGS=--output $@ -std=c++98 -Wall -g
 BUILDDEP=$(CXX) $(CXXFLAGS) -c $<
 
 # Only needs to be run once after cloning repo
-init:
-	mkdir -p $(OBJDIR)
+# Not currently needed because nothing is being built to obj folder
+# init:
+# 	mkdir -p $(OBJDIR)
 
 run: build
 	./main
 
 build: main
 
-main: $(SRCDIR)/main.cpp \
-	$(OBJDIR)/EcaWindow.o
+main: $(SRCDIR)/main.cpp
 	$(CXX) $(CXXFLAGS) -lfltk $^
 
 # The ./ at the beginning of the second line is redundant
@@ -30,5 +30,6 @@ clean:
 
 ################################################################################
 
-$(OBJDIR)/EcaWindow.o: $(SRCDIR)/EcaWindow.cpp $(SRCDIR)/EcaWindow.hpp
-	$(BUILDDEP)
+# Example to incrementally build a dependency
+# $(OBJDIR)/Button.o: $(SRCDIR)/Button.cpp $(SRCDIR)/Button.hpp
+# 	$(BUILDDEP)
