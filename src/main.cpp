@@ -2,7 +2,6 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
-#include <sstream>
 
 #include <FL/Fl.H>
 #include <FL/Fl_Box.H>
@@ -12,7 +11,6 @@
 #include <FL/Fl_Radio_Round_Button.H>
 #include <FL/Fl_RGB_Image.H>
 #include <FL/Fl_Window.H>
-#include <FL/fl_draw.H>
 
 #include "EcaWindow.hpp"
 
@@ -159,13 +157,9 @@ void populateRow(unsigned char *const buf, const int rowLen, const struct Config
 }
 
 void updateEca(const struct Config &config) {
-    // std::cout << "updateEca\n";
-
     // Get rid of old image if it exists
     Fl_Image *const oldImage = box->image();
     if (oldImage != NULL) {
-        // std::cout << "Getting rid of old image\n";
-
         Fl_RGB_Image *const oldRgbImage = dynamic_cast<Fl_RGB_Image*>(oldImage);
 
         if (oldRgbImage) {
@@ -273,12 +267,12 @@ void wrapChangeCallback(Fl_Widget *w, void *data) {
     }
 }
 
-// C++98 standard library does not have round.
-/* https://stackoverflow.com/questions/485525/
-round-for-float-in-c/485546#485546 */
-double round(const double d) {
-    return floor(d + 0.5);
-}
+// // C++98 standard library does not have round.
+// /* https://stackoverflow.com/questions/485525/
+// round-for-float-in-c/485546#485546 */
+// double round(const double d) {
+//     return floor(d + 0.5);
+// }
 
 void ruleChangeCallback(Fl_Widget *w, void *data) {
     Fl_Hor_Value_Slider *const slider = dynamic_cast<Fl_Hor_Value_Slider*>(w);
@@ -331,8 +325,7 @@ int main(int argc, char **argv) {
     // This box will use an image label
     box = new Fl_Box(0, 0, imageAreaWidth, initialWindowHeight);
     // box->box(FL_BORDER_BOX);// For debugging
-    // Inexplicably, this causes the image not to show
-    // box->labeltype(_FL_IMAGE_LABEL);
+    // box->labeltype(_FL_IMAGE_LABEL);// Why does this cause the image not to show?
     windowPack->resizable(box);
 
     Fl_Pack *const rightPack = new Fl_Pack(0, 0, rightColumnWidth, initialWindowHeight);
@@ -347,7 +340,6 @@ int main(int argc, char **argv) {
     //  of radio buttons need to be in different groups
     //  in order to work like radio buttons (only one selected at a time)
     Fl_Pack *const initialStateRadioPack = new Fl_Pack(0, 0, rightColumnWidth, 0);
-
     Fl_Radio_Round_Button *const initialCenterBitButton =  new Fl_Radio_Round_Button(0, 0, 0, radioButtonHeight, "Center bit");
     Fl_Radio_Round_Button *const initialCenterByteButton = new Fl_Radio_Round_Button(0, 0, 0, radioButtonHeight, "Center byte");
     Fl_Radio_Round_Button *const initialEvenButton =       new Fl_Radio_Round_Button(0, 0, 0, radioButtonHeight, "Even");
@@ -356,7 +348,6 @@ int main(int argc, char **argv) {
     Fl_Radio_Round_Button *const initialAllButton =        new Fl_Radio_Round_Button(0, 0, 0, radioButtonHeight, "All");
     Fl_Radio_Round_Button *const initialNoneButton =       new Fl_Radio_Round_Button(0, 0, 0, radioButtonHeight, "None");
     Fl_Radio_Round_Button *const initialRandomButton =     new Fl_Radio_Round_Button(0, 0, 0, radioButtonHeight, "Random");
-
     initialStateRadioPack->end();
 
     // Changes nothing
@@ -366,12 +357,8 @@ int main(int argc, char **argv) {
     colorBox->box(headerBoxStyle);
 
     Fl_Pack *const colorRadioPack = new Fl_Pack(0, 0, 0, 0);
-
-    Fl_Radio_Round_Button *const rgbButton = new Fl_Radio_Round_Button(
-        0, 0, 0, radioButtonHeight, "RGB 888");
-    Fl_Radio_Round_Button *const grayscaleButton = new Fl_Radio_Round_Button(
-        0, 0, 0, radioButtonHeight, "Grayscale 8");
-
+    Fl_Radio_Round_Button *const rgbButton       = new Fl_Radio_Round_Button(0, 0, 0, radioButtonHeight, "RGB 888");
+    Fl_Radio_Round_Button *const grayscaleButton = new Fl_Radio_Round_Button(0, 0, 0, radioButtonHeight, "Grayscale 8");
     colorRadioPack->end();
 
     Fl_Box *const optionsBox = new Fl_Box(0, 0, 0, headerHeight, "Options");
@@ -429,7 +416,7 @@ int main(int argc, char **argv) {
         initialNoneButton->callback(      initialStateChangeCallback, (void*)InitialState_NONE);
         initialRandomButton->callback(    initialStateChangeCallback, (void*)InitialState_RANDOM);
 
-        rgbButton->callback(colorModeChangeCallback, (void*)ColorMode_RGB888);
+        rgbButton->callback(      colorModeChangeCallback, (void*)ColorMode_RGB888);
         grayscaleButton->callback(colorModeChangeCallback, (void*)ColorMode_GRAYSCALE8);
 
         // Checkbox callback gets triggered for both set and unset
