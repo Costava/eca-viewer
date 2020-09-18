@@ -22,11 +22,10 @@ build: main
 main: $(SRCDIR)/main.cpp
 	$(CXX) $(CXXFLAGS) -lfltk $^
 
-# The ./ at the beginning of the second line is redundant
-#  but imagine if it was not there and $(OBJDIR) resolved to empty string
+# Add back in when necessary:
+# rm -f ./$(OBJDIR)/*
 clean:
 	rm -f ./main
-	rm -f ./$(OBJDIR)/*
 
 ################################################################################
 
