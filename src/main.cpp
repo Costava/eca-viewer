@@ -78,75 +78,111 @@ struct Config {
     unsigned int xth;
 } config;
 
+// Globals: below and config above
+
 Fl_Window *window;
 Fl_Box *box;
 
-// Populate first row of buffer
-void populateRow(unsigned char *const buf, const int rowLen, const struct Config &config) {
+void populateRowCenterBit(unsigned char *const row, const int rowLen) {
     const int centerByteIndex = rowLen / 2;
 
+    for (int i = 0; i < rowLen; i += 1) {
+        row[i] = 0;
+    }
+
+    row[centerByteIndex] = 0b00001000;
+}
+
+void populateRowCenterByte(unsigned char *const row, const int rowLen) {
+    const int centerByteIndex = rowLen / 2;
+
+    for (int i = 0; i < rowLen; i += 1) {
+        row[i] = 0;
+    }
+
+    row[centerByteIndex] = 0xff;
+}
+
+void populateRowEven(unsigned char *const row, const int rowLen) {
+    for (int i = 0; i < rowLen; i += 1) {
+        if ((i % 2) == 0) {
+            row[i] = 0xff;
+        }
+        else {
+            row[i] = 0;
+        }
+    }
+}
+
+void populateRowOdd(unsigned char *const row, const int rowLen) {
+    for (int i = 0; i < rowLen; i += 1) {
+        if ((i % 2) == 0) {
+            row[i] = 0;
+        }
+        else {
+            row[i] = 0xff;
+        }
+    }
+}
+
+void populateRowEveryXth(unsigned char *const row, const int rowLen, const unsigned int xth) {
+    for (int i = 0; i < rowLen; i += 1) {
+        if (xth == 1) {
+            row[i] = 0xff;
+        }
+        else if (i != 0 && (i % config.xth) == 0) {
+            row[i] = 0xff;
+        }
+        else {
+            row[i] = 0;
+        }
+    }
+}
+
+void populateRowAll(unsigned char *const row, const int rowLen) {
+    for (int i = 0; i < rowLen; i += 1) {
+        row[i] = 0xff;
+    }
+}
+
+void populateRowNone(unsigned char *const row, const int rowLen) {
+    for (int i = 0; i < rowLen; i += 1) {
+        row[i] = 0;
+    }
+}
+
+void populateRowRandom(unsigned char *const row, const int rowLen) {
+    for (int i = 0; i < rowLen; i += 1) {
+        row[i] = rand() % 256;
+    }
+}
+
+// Populate row according to the config
+void populateRow(unsigned char *const row, const int rowLen, const struct Config &config) {
     switch (config.initialState) {
         case InitialState_CENTER_BIT:
-            for (int i = 0; i < rowLen; i += 1) {
-                buf[i] = 0;
-            }
-
-            buf[centerByteIndex] = 0b00001000;
+            populateRowCenterBit(row, rowLen);
             break;
         case InitialState_CENTER_BYTE:
-            for (int i = 0; i < rowLen; i += 1) {
-                buf[i] = 0;
-            }
-
-            buf[centerByteIndex] = 0xff;
+            populateRowCenterByte(row, rowLen);
             break;
         case InitialState_EVEN:
-            for (int i = 0; i < rowLen; i += 1) {
-                if ((i % 2) == 0) {
-                    buf[i] = 0xff;
-                }
-                else {
-                    buf[i] = 0;
-                }
-            }
+            populateRowEven(row, rowLen);
             break;
         case InitialState_ODD:
-            for (int i = 0; i < rowLen; i += 1) {
-                if ((i % 2) == 0) {
-                    buf[i] = 0;
-                }
-                else {
-                    buf[i] = 0xff;
-                }
-            }
+            populateRowOdd(row, rowLen);
             break;
         case InitialState_EVERY_XTH:
-            for (int i = 0; i < rowLen; i += 1) {
-                if (config.xth == 1) {
-                    buf[i] = 0xff;
-                }
-                else if (i != 0 && (i % config.xth) == 0) {
-                    buf[i] = 0xff;
-                }
-                else {
-                    buf[i] = 0;
-                }
-            }
+            populateRowEveryXth(row, rowLen, config.xth);
             break;
         case InitialState_ALL:
-            for (int i = 0; i < rowLen; i += 1) {
-                buf[i] = 0xff;
-            }
+            populateRowAll(row, rowLen);
             break;
         case InitialState_NONE:
-            for (int i = 0; i < rowLen; i += 1) {
-                buf[i] = 0;
-            }
+            populateRowNone(row, rowLen);
             break;
         case InitialState_RANDOM:
-            for (int i = 0; i < rowLen; i += 1) {
-                buf[i] = rand() % 256;
-            }
+            populateRowRandom(row, rowLen);
             break;
         default:
             std::cerr << __func__ << ": Unknown initialState value. Exiting.\n";
