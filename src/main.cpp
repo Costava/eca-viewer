@@ -301,13 +301,6 @@ void wrapChangeCallback(Fl_Widget *w, void *data) {
     }
 }
 
-// // C++98 standard library does not have round.
-// /* https://stackoverflow.com/questions/485525/
-// round-for-float-in-c/485546#485546 */
-// double round(const double d) {
-//     return floor(d + 0.5);
-// }
-
 void ruleChangeCallback(Fl_Widget *w, void *data) {
     Fl_Hor_Value_Slider *const slider = dynamic_cast<Fl_Hor_Value_Slider*>(w);
 
