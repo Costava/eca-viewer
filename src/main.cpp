@@ -130,7 +130,7 @@ void populateRowEveryXth(unsigned char *const row, const int rowLen, const unsig
         if (xth == 1) {
             row[i] = 0xff;
         }
-        else if (i != 0 && (i % config.xth) == 0) {
+        else if (i != 0 && (i % xth) == 0) {
             row[i] = 0xff;
         }
         else {
