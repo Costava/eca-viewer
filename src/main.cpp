@@ -83,28 +83,28 @@ struct Config {
 Fl_Window *window;
 Fl_Box *box;
 
-void populateRowCenterBit(unsigned char *const row, const int rowLen) {
+void populateRowCenterBit(unsigned char *const row, const size_t rowLen) {
     const int centerByteIndex = rowLen / 2;
 
-    for (int i = 0; i < rowLen; i += 1) {
+    for (size_t i = 0; i < rowLen; i += 1) {
         row[i] = 0;
     }
 
     row[centerByteIndex] = 0b00001000;
 }
 
-void populateRowCenterByte(unsigned char *const row, const int rowLen) {
+void populateRowCenterByte(unsigned char *const row, const size_t rowLen) {
     const int centerByteIndex = rowLen / 2;
 
-    for (int i = 0; i < rowLen; i += 1) {
+    for (size_t i = 0; i < rowLen; i += 1) {
         row[i] = 0;
     }
 
     row[centerByteIndex] = 0xff;
 }
 
-void populateRowEven(unsigned char *const row, const int rowLen) {
-    for (int i = 0; i < rowLen; i += 1) {
+void populateRowEven(unsigned char *const row, const size_t rowLen) {
+    for (size_t i = 0; i < rowLen; i += 1) {
         if ((i % 2) == 0) {
             row[i] = 0xff;
         }
@@ -114,8 +114,8 @@ void populateRowEven(unsigned char *const row, const int rowLen) {
     }
 }
 
-void populateRowOdd(unsigned char *const row, const int rowLen) {
-    for (int i = 0; i < rowLen; i += 1) {
+void populateRowOdd(unsigned char *const row, const size_t rowLen) {
+    for (size_t i = 0; i < rowLen; i += 1) {
         if ((i % 2) == 0) {
             row[i] = 0;
         }
@@ -125,8 +125,8 @@ void populateRowOdd(unsigned char *const row, const int rowLen) {
     }
 }
 
-void populateRowEveryXth(unsigned char *const row, const int rowLen, const unsigned int xth) {
-    for (int i = 0; i < rowLen; i += 1) {
+void populateRowEveryXth(unsigned char *const row, const size_t rowLen, const unsigned int xth) {
+    for (size_t i = 0; i < rowLen; i += 1) {
         if (xth == 1) {
             row[i] = 0xff;
         }
@@ -139,26 +139,26 @@ void populateRowEveryXth(unsigned char *const row, const int rowLen, const unsig
     }
 }
 
-void populateRowAll(unsigned char *const row, const int rowLen) {
-    for (int i = 0; i < rowLen; i += 1) {
+void populateRowAll(unsigned char *const row, const size_t rowLen) {
+    for (size_t i = 0; i < rowLen; i += 1) {
         row[i] = 0xff;
     }
 }
 
-void populateRowNone(unsigned char *const row, const int rowLen) {
-    for (int i = 0; i < rowLen; i += 1) {
+void populateRowNone(unsigned char *const row, const size_t rowLen) {
+    for (size_t i = 0; i < rowLen; i += 1) {
         row[i] = 0;
     }
 }
 
-void populateRowRandom(unsigned char *const row, const int rowLen) {
-    for (int i = 0; i < rowLen; i += 1) {
+void populateRowRandom(unsigned char *const row, const size_t rowLen) {
+    for (size_t i = 0; i < rowLen; i += 1) {
         row[i] = rand() % 256;
     }
 }
 
 // Populate row according to the config
-void populateRow(unsigned char *const row, const int rowLen, const struct Config &config) {
+void populateRow(unsigned char *const row, const size_t rowLen, const struct Config &config) {
     switch (config.initialState) {
         case InitialState_CENTER_BIT:
             populateRowCenterBit(row, rowLen);
@@ -190,92 +190,114 @@ void populateRow(unsigned char *const row, const int rowLen, const struct Config
     }
 }
 
-void updateEca(const struct Config &config) {
-    // Get rid of old image if it exists
-    Fl_Image *const oldImage = box->image();
-    if (oldImage != NULL) {
-        Fl_RGB_Image *const oldRgbImage = dynamic_cast<Fl_RGB_Image*>(oldImage);
+// Populate rowB with the next iteration of rowA
+void calculateNextIteration(
+    const unsigned char *const rowA,
+    unsigned char *const rowB,
+    const size_t rowLen,
+    const struct Config &config)
+{
+    // Iterate bytes in row
+    for (size_t i = 0; i < rowLen; i += 1) {
+        unsigned char resultByte = 0;
 
-        if (oldRgbImage) {
-            const uchar *oldBuf = oldRgbImage->array;
-
-            box->image(NULL);
-            delete oldRgbImage;
-            delete oldBuf;
+        unsigned char leftWrapBit;
+        if (i > 0) {
+            leftWrapBit = (rowA[i - 1] & 0b10000000) > 0;
+        }
+        else if (config.wrap) {
+            leftWrapBit = (rowA[rowLen - 1] & 0b10000000) > 0;
         }
         else {
-            std::cerr << "box->image() is not Fl_RGB_Image. Bad state.\n";
-            exit(1);
+            leftWrapBit = 0;
+        }
+
+        unsigned char rightWrapBit;
+        if (i < rowLen - 1) {
+            rightWrapBit = rowA[i + 1] & 0b1;
+        }
+        else if (config.wrap) {
+            rightWrapBit = rowA[0] & 0b1;
+        }
+        else {
+            rightWrapBit = 0;
+        }
+
+        const unsigned char byte = rowA[i];
+
+        // Iterate bits in byte
+        for (unsigned int b = 0; b < 8; b += 1) {
+            const unsigned char leftBit  = (b == 0) ? leftWrapBit  : ((byte >> (b - 1)) & 0b1);
+            const unsigned char rightBit = (b == 7) ? rightWrapBit : ((byte >> (b + 1)) & 0b1);
+            const unsigned char bit = (byte >> b) & 0b1;
+
+            const unsigned char indexIntoRule = 0 | leftBit | (bit << 1) | (rightBit << 2);
+
+            const unsigned char newBit = (config.rule >> indexIntoRule) & 0b1;
+            resultByte |= (newBit << b);
+        }
+
+        rowB[i] = resultByte;
+    }
+}
+
+void updateEca(const struct Config &config) {
+    // Get rid of old image if it exists
+    {
+        Fl_Image *const oldImage = box->image();
+        if (oldImage != NULL) {
+            Fl_RGB_Image *const oldRgbImage = dynamic_cast<Fl_RGB_Image*>(oldImage);
+
+            if (oldRgbImage) {
+                const uchar *const oldBuf = oldRgbImage->array;
+
+                box->image(NULL);
+                delete oldRgbImage;
+                delete oldBuf;
+            }
+            else {
+                std::cerr << "box->image() is not Fl_RGB_Image. Bad state.\n";
+                exit(1);
+            }
         }
     }
 
+    const int sw = box->w();// signed width
+    const int sh = box->h();// signed height
+    // Validate dimensions
+    if (sw < 0) {
+        std::cerr << __func__ << "Width of window should not be negative: " << sw << "\n";
+        exit(1);
+    }
+    if (sh < 0) {
+        std::cerr << __func__ << "Height of window should not be negative: " << sh << "\n";
+        exit(1);
+    }
+
     // New size of image
-    const int width = box->w();
-    const int height = box->h();
+    const unsigned int width  = (unsigned int)sw;
+    const unsigned int height = (unsigned int)sh;
 
-    const int multiplier = (config.colorMode == ColorMode_RGB888) ? 3 : 1;
+    const unsigned int bytesPerPixel = (config.colorMode == ColorMode_RGB888) ? 3 : 1;
 
-    const int bufLen = multiplier * width * height;
+    const size_t bufLen = bytesPerPixel * width * height;
     unsigned char *buf = new unsigned char[bufLen];
 
     // Populate first row
-    const int rowLen = multiplier * width;
+    const size_t rowLen = bytesPerPixel * width;
     populateRow(buf, rowLen, config);
 
     // Populate remaining rows
     // Iterate rows
-    for (int row = 0; row < height - 1; row += 1) {
+    for (unsigned int row = 0; row < height - 1; row += 1) {
         const unsigned char *const rowA = &buf[(row + 0) * rowLen];
-        unsigned char *const rowB = &buf[(row + 1) * rowLen];
+        unsigned char *const rowB       = &buf[(row + 1) * rowLen];
 
-        // Iterate bytes in row
-        for (int i = 0; i < rowLen; i += 1) {
-            unsigned char resultByte = 0;
-
-            unsigned char leftWrapBit;
-            if (i > 0) {
-                leftWrapBit = (rowA[i - 1] & 0b10000000) > 0;
-            }
-            else if (config.wrap) {
-                leftWrapBit = (rowA[rowLen - 1] & 0b10000000) > 0;
-            }
-            else {
-                leftWrapBit = 0;
-            }
-
-            unsigned char rightWrapBit;
-            if (i < rowLen - 1) {
-                rightWrapBit = rowA[i + 1] & 0b1;
-            }
-            else if (config.wrap) {
-                rightWrapBit = rowA[0] & 0b1;
-            }
-            else {
-                rightWrapBit = 0;
-            }
-
-            const unsigned char byte = rowA[i];
-
-            // Iterate bits in byte
-            for (int b = 0; b < 8; b += 1) {
-                const unsigned char leftBit  = (b == 0) ? leftWrapBit  : ((byte >> (b - 1)) & 0b1);
-                const unsigned char rightBit = (b == 7) ? rightWrapBit : ((byte >> (b + 1)) & 0b1);
-                const unsigned char bit = (byte >> b) & 0b1;
-
-                const unsigned char indexIntoRule = 0 | leftBit | (bit << 1) | (rightBit << 2);
-
-                const unsigned char newBit = (config.rule >> indexIntoRule) & 0b1;
-                resultByte |= (newBit << b);
-            }
-
-            rowB[i] = resultByte;
-        }
+        calculateNextIteration(rowA, rowB, rowLen, config);
     }
 
-    const int D = (config.colorMode == ColorMode_RGB888) ? 3 : 1;
-
     // We remain responsible for deallocating buf (not the image object)
-    Fl_RGB_Image *image = new Fl_RGB_Image(buf, width, height, D, 0);
+    Fl_RGB_Image *image = new Fl_RGB_Image(buf, width, height, bytesPerPixel, 0);
     box->image(image);
     window->redraw();// Avoid visual artifacts
 }
