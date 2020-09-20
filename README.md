@@ -15,6 +15,8 @@ Dependencies:
 
 Feel free to open an issue to ask a question.
 
+![Screenshot 0](https://i.imgur.com/PjaOMPk.png)
+
 How to
 ------
 
@@ -38,3 +40,20 @@ License
 -------
 
 GNU General Public License Version 3. See file `LICENSE`.
+
+More screenshots
+----------------
+
+![Screenshot 1](https://i.imgur.com/7xlqb8Q.png)
+
+![Screenshot 2](https://i.imgur.com/TlOsjBQ.png)
+
+![Screenshot 3](https://i.imgur.com/XC5rGwJ.png)
+
+![Screenshot 4](https://i.imgur.com/wOoaBBX.png)
+
+![Screenshot 5](https://i.imgur.com/JI6mWXF.png)
+
+![Screenshot 6](https://i.imgur.com/XtwPTa2.png)
+
+![Screenshot 7](https://i.imgur.com/09Af3Zb.png)
